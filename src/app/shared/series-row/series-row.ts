@@ -12,8 +12,6 @@ import { SeriesCard } from '../series-card/series-card';
 export class SeriesRow {
   readonly title = input.required<string>();
   readonly items = input<SerieSummary[]>([]);
-  
-  // 🌟 SOLO dejamos el viewDetails. (Eliminamos el readonly interaction)
   readonly viewDetails = output<SerieSummary>();
 
   @ViewChild('scroller') private readonly scroller?: ElementRef<HTMLDivElement>;

@@ -17,7 +17,6 @@ import { SeriesService }                         from '../../core/series.service
 export class SeriesCard implements OnInit {
   readonly serie = input.required<SerieSummary>();
 
-  /** Emitido cuando el usuario hace clic en la tarjeta para abrir el modal */
   readonly viewDetails = output<SerieSummary>();
 
   readonly detail  = signal<SerieDetail | null>(null);
@@ -59,7 +58,6 @@ export class SeriesCard implements OnInit {
     }
   }
 
-  /** Clic en la tarjeta → propagar el evento hacia el BrowsePage */
   onCardClick(): void {
     this.viewDetails.emit(this.serie());
   }

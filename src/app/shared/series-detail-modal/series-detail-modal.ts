@@ -51,10 +51,8 @@ export class SeriesDetailModal implements OnInit, OnDestroy {
   readonly loadingDetail = signal(true);
   readonly loadError     = signal(false);
 
-  // 🌟 NUEVO: Estado para almacenar qué interacciones ya tiene el usuario con esta serie
   readonly activeInteractions = signal<InteractionType[]>([]);
 
-  // ── Computados ────────────────────────────────────────────────────────────
 
   readonly posterUrl = computed(() =>
     resolvePosterUrl(this.detail()?.poster ?? this.serie().poster)
@@ -98,12 +96,9 @@ export class SeriesDetailModal implements OnInit, OnDestroy {
     private readonly sanitizer: DomSanitizer
   ) {}
 
-  // ── Lifecycle ─────────────────────────────────────────────────────────────
-
   async ngOnInit(): Promise<void> {
     document.body.style.overflow = 'hidden';
 
-    // 1. Cargamos los detalles de la serie
     try {
       const d = await firstValueFrom(this.seriesService.getDetalles(this.serie().id_tmdb));
       this.detail.set(d);
@@ -114,7 +109,6 @@ export class SeriesDetailModal implements OnInit, OnDestroy {
       this.loadingDetail.set(false);
     }
 
-    // 2. 🌟 NUEVO: Consultamos las interacciones en segundo plano para encender los botones
     try {
       const interacciones = await firstValueFrom(this.seriesService.getInteracciones());
       const misInteracciones = interacciones
@@ -123,7 +117,6 @@ export class SeriesDetailModal implements OnInit, OnDestroy {
         
       this.activeInteractions.set(misInteracciones);
     } catch {
-      // Si falla, simplemente los botones se quedan apagados por defecto
     }
   }
 
@@ -131,9 +124,6 @@ export class SeriesDetailModal implements OnInit, OnDestroy {
     document.body.style.overflow = '';
   }
 
-  // ── Interacciones ─────────────────────────────────────────────────────────
-
-  // 🌟 NUEVO: Función auxiliar para que el HTML sepa qué pintar
   hasInteraction(type: string): boolean {
     return this.activeInteractions().includes(type as InteractionType);
   }

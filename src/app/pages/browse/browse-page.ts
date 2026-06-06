@@ -60,8 +60,6 @@ const JUNK_WORDS = [
 export class BrowsePage implements OnInit {
   readonly loading       = signal(true);
   readonly isRefreshing  = signal(false);
-  
-  // 🌟 ESTADOS DE SERIES
   readonly recommendations = signal<SerieSummary[]>([]);
   readonly heroRail      = signal<SerieSummary[]>([]);
   readonly popular       = signal<SerieSummary[]>([]);
@@ -70,16 +68,12 @@ export class BrowsePage implements OnInit {
   readonly likes         = signal<SerieSummary[]>([]);
   readonly favorites     = signal<SerieSummary[]>([]);
   readonly dislikedIds   = signal<number[]>([]);
-  
-  // 🌟 ESTADOS DE UI
   readonly genreRows     = signal<SeriesRowModel[]>([]);
   readonly hero          = signal<SerieDetail | null>(null);
   readonly searchResults = signal<SerieSummary[]>([]);
   readonly status        = signal('');
   readonly toast         = signal('');
   readonly selectedSerie = signal<SerieSummary | null>(null);
-  
-  // 🌟 ESTADOS DEL MENÚ DESPLEGABLE
   readonly showLibraryDropdown = signal(false);
   readonly libraryModal = signal<{ title: string; items: SerieSummary[] } | null>(null);
 
@@ -98,10 +92,6 @@ export class BrowsePage implements OnInit {
     await this.loadDashboard();
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // MANEJO DE MODALES Y MENÚS
-  // ─────────────────────────────────────────────────────────────────────────
-
   openDetailsModal(serie: SerieSummary): void {
     this.selectedSerie.set(serie);
   }
@@ -118,10 +108,6 @@ export class BrowsePage implements OnInit {
   closeLibrary(): void {
     this.libraryModal.set(null);
   }
-
-  // ─────────────────────────────────────────────────────────────────────────
-  // CARGA INICIAL COMPLETA
-  // ─────────────────────────────────────────────────────────────────────────
 
   async loadDashboard(): Promise<void> {
     this.loading.set(true);
@@ -140,7 +126,6 @@ export class BrowsePage implements OnInit {
       this.likes.set(interactionState.likes);
       this.favorites.set(interactionState.favorites);
 
-      // Creamos un pool inmenso de todos los gustos para calcular los géneros matemáticamente
       const allInteractions = [
         ...interactionState.history, 
         ...interactionState.watchlist, 
@@ -195,10 +180,6 @@ export class BrowsePage implements OnInit {
     }
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // BÚSQUEDA E INTERACCIONES
-  // ─────────────────────────────────────────────────────────────────────────
-
   async search(): Promise<void> {
     const query = this.searchTerm.trim();
     if (query.length < 2) {
@@ -216,16 +197,13 @@ export class BrowsePage implements OnInit {
   }
 
  async onInteraction(event: { serie: SerieSummary; type: InteractionType }): Promise<void> {
-    // 1. Verificamos si es un Toggle Off (Si ya tenía la interacción guardada)
     let isToggleOff = false;
     if (event.type === 'QUIERE_VER') isToggleOff = this.watchlist().some(s => s.id_tmdb === event.serie.id_tmdb);
     if (event.type === 'ES_FAVORITA') isToggleOff = this.favorites().some(s => s.id_tmdb === event.serie.id_tmdb);
     if (event.type === 'LE_GUSTA') isToggleOff = this.likes().some(s => s.id_tmdb === event.serie.id_tmdb);
 
-    // 2. Enviamos la petición al backend
     await this.onboarding.recordInteraction(event.serie, event.type);
     
-    // 3. Mostramos el mensaje correcto
     if (isToggleOff) {
       this.showToast('Se removió de tu colección.');
     } else {
@@ -238,7 +216,6 @@ export class BrowsePage implements OnInit {
       this.popular.set(this.popular().filter(s => s.id_tmdb !== event.serie.id_tmdb));
     }
 
-    // Refrescamos silenciosamente todas las colecciones
     const state = await this.loadInteractionState();
     this.history.set(state.history);
     this.watchlist.set(state.watchlist);
@@ -246,7 +223,6 @@ export class BrowsePage implements OnInit {
     this.favorites.set(state.favorites);
     this.dislikedIds.set(state.dislikedIds);
 
-    // Si el modal de la biblioteca está abierto, actualizamos su contenido en vivo
     const currentModal = this.libraryModal();
     if (currentModal) {
        if (currentModal.title === 'Mi Lista') this.libraryModal.set({ ...currentModal, items: this.watchlist() });
@@ -260,10 +236,6 @@ export class BrowsePage implements OnInit {
       this.loadGenreRows(dynamicGenres).then(newRows => this.genreRows.set(newRows));
     }
   }
-
-  // ─────────────────────────────────────────────────────────────────────────
-  // HERO & NAVEGACIÓN
-  // ─────────────────────────────────────────────────────────────────────────
 
   playHero(): void {
     const key = this.hero()?.youtube_key;
@@ -296,10 +268,6 @@ export class BrowsePage implements OnInit {
     await this.router.navigate(['/']);
   }
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // LÓGICA INTERNA PRIVADA
-  // ─────────────────────────────────────────────────────────────────────────
-
   private async loadRecommendations(): Promise<SerieSummary[]> {
     try {
       return await firstValueFrom(this.series.getRecomendaciones());
@@ -323,8 +291,6 @@ private async loadInteractionState(): Promise<{
       const favorites: SerieSummary[] = [];
       const likes: SerieSummary[] = [];
       const dislikedIds: number[] = [];
-
-      // Aumentamos el corte a 50 porque ahora una serie puede ocupar hasta 3 registros en la API
       const recentInteractions = interactions.slice(0, 50);
       const detailPromises = recentInteractions.map(item =>
         firstValueFrom(this.series.getDetalles(item.id_tmdb)).catch(() => item)
@@ -336,7 +302,6 @@ private async loadInteractionState(): Promise<{
         const item = recentInteractions[i];
         const detail = details[i];
 
-        // 🌟 EVITAMOS DUPLICADOS EN EL HISTORIAL (Crucial para que Angular no rompa la cuadrícula)
         if (!history.find(h => h.id_tmdb === detail.id_tmdb)) {
            history.push(detail);
         }
